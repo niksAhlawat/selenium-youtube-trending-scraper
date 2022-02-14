@@ -1,0 +1,20 @@
+{
+  "files": {
+    "scraoer.py": [
+      {
+        "id": "74fc724d-a7de-4d00-b6e6-63ac12c88f7e",
+        "line": 1,
+        "version": 15,
+        "index": 0
+      }
+    ],
+    "scraper.py": [
+      {
+        "id": "0b2189a9-cfea-46e5-88c1-3e5c374681c1",
+        "line": 1,
+        "version": 520,
+        "index": 0
+      }
+    ]
+  }
+}
