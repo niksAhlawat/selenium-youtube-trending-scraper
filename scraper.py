@@ -2,6 +2,8 @@ import os
 import json
 import pandas as pd
 
+import re
+
 # Mail Modules
 import smtplib
 import mimetypes
@@ -12,6 +14,10 @@ from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.by import By
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium.webdriver.support import expected_conditions as EC
+
+# Date Time Modules
+import datetime
+from dateutil.relativedelta import relativedelta
 
 
 YOUTUBE_TRENDING_URL = 'https://www.youtube.com/feed/trending'
@@ -52,13 +58,16 @@ def parse_video(video):
   
   description = video.find_element(By.ID, 'description-text').text  
 
-  views = "" #all_spans[0].text
-  upload_time = "" #all_spans[1].text
+  views = "" 
+  upload_time = "" 
   all_spans = video.find_elements(By.ID, "metadata-line")
-  for span in all_spans:
-    print (span.text)
-    views, upload_time = all_spans
   
+  for i in all_spans:
+    spans = (i.text).split("\n")
+    views, upload_time = spans
+
+  views = int (view_convert(views))
+  upload_time = get_past_date(upload_time)
 
   return {
     'title': title,
@@ -100,6 +109,50 @@ def send_email(body):
     print('Something went wrong...')
 
 
+def view_convert(str):
+    res = re.findall(r'([-+]?\d*\.?\d+|\d+)(\w+?)', str.split()[0])
+    num = float(res[0][0])
+    val = res[0][1]
+    mul = 0
+    if val == "M":
+        mul = num * 1000000
+    elif val == "B":
+        mul = num * 1000000000
+    elif val == "K":
+        mul = num * 1000
+    else:
+        mul = num * 1
+    return mul
+
+
+
+def get_past_date(str_days_ago):
+    TODAY = datetime.date.today()
+    splitted = str_days_ago.split()
+    if len(splitted) == 1 and splitted[0].lower() == 'today':
+        return str(TODAY.isoformat())
+    elif len(splitted) == 1 and splitted[0].lower() == 'yesterday':
+        date = TODAY - relativedelta(days=1)
+        return str(date.isoformat())
+    elif splitted[1].lower() in ['hour', 'hours', 'hr', 'hrs', 'h']:
+        date = datetime.datetime.now() - relativedelta(hours=int(splitted[0]))
+        return str(date.date().isoformat())
+    elif splitted[1].lower() in ['day', 'days', 'd']:
+        date = TODAY - relativedelta(days=int(splitted[0]))
+        return str(date.isoformat())
+    elif splitted[1].lower() in ['wk', 'wks', 'week', 'weeks', 'w']:
+        date = TODAY - relativedelta(weeks=int(splitted[0]))
+        return str(date.isoformat())
+    elif splitted[1].lower() in ['mon', 'mons', 'month', 'months', 'm']:
+        date = TODAY - relativedelta(months=int(splitted[0]))
+        return str(date.isoformat())
+    elif splitted[1].lower() in ['yrs', 'yr', 'years', 'year', 'y']:
+        date = TODAY - relativedelta(years=int(splitted[0]))
+        return str(date.isoformat())
+    else:
+        return "Wrong Argument format"    
+
+
 if __name__ == "__main__":
   print('Creating driver')
   driver = get_driver()
@@ -115,9 +168,9 @@ if __name__ == "__main__":
   videos_data = [parse_video(video) for video in videos[:10]]
   
   print('Save the data to a CSV')
-  #videos_df = pd.DataFrame(videos_data)
+  videos_df = pd.DataFrame([parse_video(video) for video in videos])
   #print(videos_df)
-  #videos_df.to_csv('trending.csv', index=None)
+  videos_df.to_csv('trending.csv', index=None)
 
   print("Send the results over email")
   body = json.dumps(videos_data, indent=2)
