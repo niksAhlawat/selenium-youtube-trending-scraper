@@ -82,8 +82,8 @@ def parse_video(video):
 def send_email(body):
   try :
     message = EmailMessage()
-    sender = "temp.developmentmail@gmail.com"
-    recipient = "temp.developmentmail@gmail.com"
+    sender = "nikhil.kumar@iic.ac.in"
+    recipient = "nikhil.kumar@iic.ac.in"
     password = os.environ['GMAIL_PASSWORD']
 
     message['From'] = sender
